@@ -1,0 +1,18 @@
+{
+  "name": "Uzbekistan Travel Companion",
+  "short_name": "UZ Companion",
+  "description": "Trains, taxis, cash and safety in Uzbekistan — in one offline-ready app.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#E9E4DC",
+  "theme_color": "#E9E4DC",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

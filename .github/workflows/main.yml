@@ -1,0 +1,78 @@
+name: Build iOS App (.ipa) on Cloud Mac
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  build-ios-ipa:
+    name: Compile Capacitor iOS (.ipa) on macOS Xcode
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install project dependencies
+        run: npm install
+
+      - name: Build production web bundle & add/sync iOS
+        run: |
+          npm run build
+          if [ ! -d "ios" ]; then
+            npx cap add ios
+          fi
+          npx cap sync ios
+
+      - name: Install CocoaPods dependencies
+        run: |
+          cd ios/App
+          if [ -f "Podfile" ]; then
+            pod install
+          fi
+
+      - name: Build unsigned iOS Archive with Xcode
+        run: |
+          cd ios/App
+          if [ -d "App.xcworkspace" ]; then
+            xcodebuild -workspace App.xcworkspace \
+              -scheme App \
+              -configuration Release \
+              -sdk iphoneos \
+              -derivedDataPath build \
+              CODE_SIGN_IDENTITY="" \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGNING_ALLOWED=NO \
+              clean build
+          else
+            xcodebuild -project App.xcodeproj \
+              -scheme App \
+              -configuration Release \
+              -sdk iphoneos \
+              -derivedDataPath build \
+              CODE_SIGN_IDENTITY="" \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGNING_ALLOWED=NO \
+              clean build
+          fi
+
+      - name: Package .app into installable .ipa (for Sideloadly / AltStore on Windows)
+        run: |
+          mkdir -p Payload
+          cp -r ios/App/build/Build/Products/Release-iphoneos/App.app Payload/
+          zip -r UzbekistanTravelCompanion-unsigned.ipa Payload
+
+      - name: Upload .ipa Artifact for Windows download
+        uses: actions/upload-artifact@v4
+        with:
+          name: UzbekistanTravelCompanion-iOS-IPA
+          path: UzbekistanTravelCompanion-unsigned.ipa
+          retention-days: 14
